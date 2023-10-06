@@ -61,7 +61,7 @@ def make_interval(start_date, monthly_interval):
 def field_element_helper(name,class_name):
     return(f'\
         <FieldElement>\n\
-            <fieldName>{name}</fieldName>\n\
+            <fieldName>customfield_{name}</fieldName>\n\
             <fieldClassName>com.atlassian.jira.issue.fields.{class_name}</fieldClassName>\n\
         </FieldElement>\n')
 
