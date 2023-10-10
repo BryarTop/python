@@ -124,6 +124,7 @@ function main(wb: ExcelScript.Workbook) {
                     obj[key] = 'DYNAMIC'
                 };
             } else if(key == 'firstExDate'){
+              obj[key] = new Date(addHoursToDate(new Date(obj[key]),7));
               obj[key] = parseInt((new Date(obj[key]).getTime() / 1000).toFixed(0));
             }
             impTempWksht.getRangeByIndexes(lastRow,col ,1,1).setValue(obj[key]);
@@ -133,9 +134,8 @@ function main(wb: ExcelScript.Workbook) {
 
     const addUpcomingExecutions = (issueName:string, seg:string, firstExDate:string, dueDateInterval:string) => {
         upcmExWksht.activate();
-				let lRow:number = upcmExWksht.getUsedRange().getLastRow().getRowIndex();
+        let lRow:number = upcmExWksht.getUsedRange().getLastRow().getRowIndex();
         let exDate:Date = new Date(firstExDate);
-        exDate = new Date(exDate.setHours(exDate.getHours()+7));
         const interval = {
           'Signature':1,
           'Large Enterprise':1, 
@@ -172,7 +172,9 @@ function main(wb: ExcelScript.Workbook) {
       })
     }
     
-
+  function addHoursToDate(dateObj:Date, hrs:number):Date{
+    return new Date(dateObj.setHours(dateObj.getHours() + hrs));
+  }
     //helper function for setvalues/setformulas
     function formArrBuilder(num:number, form:string){
         const outerArray:string[][] = []
@@ -182,10 +184,11 @@ function main(wb: ExcelScript.Workbook) {
         return outerArray;
     }
 
+
     const updatedSpec:object = gatherData(specs);
     aggregate(updatedSpec);
     addUpcomingExecutions(updatedSpec['scheduledIssueName'],updatedSpec['seg'],updatedSpec['firstExDate'],updatedSpec['dueDateVal']);
     extrapolate(updatedSpec,specReplacement);
     updateDataValidation(updatedSpec['scheduledIssueName']);
     
-}
+};
