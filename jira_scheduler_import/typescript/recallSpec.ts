@@ -1,15 +1,16 @@
- function main(wb: ExcelScript.Workbook) {
+function main(wb: ExcelScript.Workbook) {
     const ws: ExcelScript.Worksheet = wb.getWorksheet('Form');
     const aggWksht: ExcelScript.Worksheet = wb.getWorksheet('Aggregated');
     const impTempWksht: ExcelScript.Worksheet = wb.getWorksheet('Import_Template');
     const upCmExWksht:ExcelScript.Worksheet = wb.getWorksheet('Upcoming_Executions');
     const specToRecall:string = ws.getRange("M5").getText();
     if(specToRecall == ''){
-      ws.getRange("N5").setValue('Please Select a valid spec to recall');
-      throw new Error
+      ws.getRange("N6").setValue('Please Select a valid spec to recall');
+      throw new Error('Please select a valid spec to recall.')
     } else{
       ws.getRange('M5').setValue('');
-    }
+      ws.getRange('N6').setValue('');
+    };
 
   const specTemplate:object = {
     'scheduledIssueName': '',
@@ -50,13 +51,14 @@
     while(!found){
       if(aggWksht.getRangeByIndexes(idx,0,1,1).getText() == specName){
         found = true;
+      } else if(idx>lastRow){
+        throw new Error('spec out of range.')
       } else {
         idx += 1;
       }
     }
-    console.log('idx after while loop: ' + idx)
     let c:number = 0;
-    var index:number = idx;
+    var index:number = idx; //set to global variable so .forEach() can access idx. 
     Object.keys(template).forEach((spec) => {
       const rng:ExcelScript.Range = aggWksht.getRangeByIndexes(index,c,1,1);
       template[spec] = rng.getText();
@@ -117,10 +119,9 @@
   }
 
   function sortSheet(wkst:ExcelScript.Worksheet){
-    const lastCol:number = wkst.getUsedRange().getLastColumn().getColumnIndex();
     wkst.getAutoFilter().getRange().getSort().apply([{ key: 0, ascending: true }], false, true);
   };
-  aggSheetCleanup(specToRecall, specTemplate);
+
   
   fillForm(aggSheetCleanup(specToRecall,specTemplate));
   importTempCleanup(specToRecall);
