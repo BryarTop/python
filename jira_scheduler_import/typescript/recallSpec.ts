@@ -1,4 +1,4 @@
-function main(wb: ExcelScript.Workbook) {
+ function main(wb: ExcelScript.Workbook) {
     const ws: ExcelScript.Worksheet = wb.getWorksheet('Form');
     const aggWksht: ExcelScript.Worksheet = wb.getWorksheet('Aggregated');
     const impTempWksht: ExcelScript.Worksheet = wb.getWorksheet('Import_Template');
@@ -8,7 +8,7 @@ function main(wb: ExcelScript.Workbook) {
       ws.getRange("N5").setValue('Please Select a valid spec to recall');
       throw new Error
     } else{
-      ws.getRange('N6').setValue('');
+      ws.getRange('M5').setValue('');
     }
 
   const specTemplate:object = {
@@ -54,17 +54,22 @@ function main(wb: ExcelScript.Workbook) {
         idx += 1;
       }
     }
+    console.log('idx after while loop: ' + idx)
     let c:number = 0;
+    var index:number = idx;
     Object.keys(template).forEach((spec) => {
-      template[spec] = aggWksht.getRangeByIndexes(idx,c,1,1).getText();
-      c++;
+      const rng:ExcelScript.Range = aggWksht.getRangeByIndexes(index,c,1,1);
+      template[spec] = rng.getText();
+      rng.setValue('');
+      c+=1;
     });
     sortSheet(aggWksht);
     return template;
   };
 
   const importTempCleanup = (specName:string) => {
-    let lastRow:number = impTempWksht.getUsedRange().getRowIndex();
+    let lastRow:number = impTempWksht.getUsedRange().getLastRow().getRowIndex();
+    let lastCol:number = impTempWksht.getUsedRange().getLastColumn().getColumnIndex();
     let found:boolean = false;
     let idx:number = 1;
     while(!found){
@@ -73,8 +78,10 @@ function main(wb: ExcelScript.Workbook) {
       } else {
         idx+=1;
       }
+    };
+    for(let i:number = 0; i<=lastCol; i++){
+      impTempWksht.getRangeByIndexes(idx,i,1,1).setValue('');
     }
-    impTempWksht.getRangeByIndexes(idx,0,1,1).getEntireRow().setValue('');
     sortSheet(impTempWksht);
   }
 
@@ -104,7 +111,7 @@ function main(wb: ExcelScript.Workbook) {
     ws.activate();
     let i:number = 4;
     Object.keys(obj).forEach((spec) => {
-      ws.getRangeByIndexes(i,4,1,1).setValue(spec);
+      ws.getRangeByIndexes(i,4,1,1).setValue(obj[spec]);
       i++;
     });
   }
@@ -113,7 +120,8 @@ function main(wb: ExcelScript.Workbook) {
     const lastCol:number = wkst.getUsedRange().getLastColumn().getColumnIndex();
     wkst.getAutoFilter().getRange().getSort().apply([{ key: 0, ascending: true }], false, true);
   };
-
+  aggSheetCleanup(specToRecall, specTemplate);
+  
   fillForm(aggSheetCleanup(specToRecall,specTemplate));
   importTempCleanup(specToRecall);
   upcomingExesCleanup(specToRecall);
